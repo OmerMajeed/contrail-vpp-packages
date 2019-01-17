@@ -34,6 +34,7 @@ Requires: python-gevent
 Requires: PyYAML
 Requires: python2-pyvmomi
 Requires: python-ipaddress
+Requires: contrail-vpp-agent
 Requires: contrail-vrouter-agent
 
 %description

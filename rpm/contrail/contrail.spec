@@ -49,7 +49,7 @@ BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: bison
 BuildRequires: boost-devel
-BuildRequires: gperftools-devel
+#BuildRequires: gperftools-devel
 BuildRequires: cassandra-cpp-driver
 BuildRequires: cassandra-cpp-driver-devel
 BuildRequires: cmake
@@ -248,13 +248,15 @@ cp %{_manifestFile} %{buildroot}/opt/contrail/manifest.xml
 %endif
 # Install section of contrail-manifest package - End
 
+cp /root/vpp_binaries/*.rpm %{_sbtop}RPMS/x86_64/
+
 %files
 
 %package vrouter
 Summary:            Contrail vRouter
 Group:              Applications/System
 
-Requires:           contrail-vrouter-agent >= %{_verstr}-%{_relstr}
+Requires:           contrail-vrouter-agent
 Requires:           contrail-lib >= %{_verstr}-%{_relstr}
 Requires:           xmltodict >= 0.7.0
 
@@ -499,6 +501,64 @@ chmod 0700 /etc/contrail/ssl/private/
 chmod 0750 /var/lib/contrail/dhcp/
 chmod 0750 /var/lib/contrail/backup/
 chmod +x /etc/init.d/contrail-vrouter-agent
+
+%package vpp-agent
+
+Summary:            Contrail vRouter
+
+Group:              Applications/System
+
+Requires:           contrail-lib >= %{_verstr}-%{_relstr}
+Requires:           python-paramiko
+Requires:           python2-passlib
+
+%description vpp-agent
+Contrail Virtual Router Agent package
+
+OpenContrail is a network virtualization solution that provides an overlay
+virtual-network to virtual-machines, containers or network namespaces. This
+package provides the contrail-vrouter user space agent.
+
+%files vpp-agent
+%defattr(-, root, root)
+%{_bindir}/contrail-vpp-agent*
+%{_bindir}/contrail-tor-agent*
+%{_bindir}/vrouter-port-control
+%{_bindir}/contrail-compute-setup
+%{_bindir}/contrail-toragent-setup
+%{_bindir}/contrail-toragent-cleanup
+%{_bindir}/contrail-vrouter-agent-health-check.py
+%{_bindir}/contrail_crypt_tunnel_client.py
+%config(noreplace) %{_contrailetc}/contrail-vrouter-agent.conf
+%config(noreplace) %{_contrailetc}/supervisord_vrouter.conf
+/etc/init.d/contrail-vpp-agent
+%config(noreplace) /etc/contrail/supervisord_vrouter_files/contrail-vpp-agent.ini
+/etc/init.d/supervisor-vrouter
+%{python_sitelib}/contrail_vrouter_provisioning*
+%{python_sitelib}/ContrailVrouterCli*
+
+%pre vpp-agent
+set -e
+getent group contrail >/dev/null || groupadd -r contrail
+getent passwd contrail >/dev/null || \
+  useradd -r -g contrail -d /var/lib/contrail -s /bin/false \
+  -c "OpenContail daemon" contrail
+
+%post vpp-agent
+mkdir -p /var/log/contrail /var/lib/contrail/ /etc/contrail/
+mkdir -p /var/lib/contrail/dhcp/
+mkdir -p /var/lib/contrail/backup
+mkdir -p /etc/contrail/ssl/certs/ /etc/contrail/ssl/private/
+chown contrail:adm /var/log/contrail
+chmod 0750 /var/log/contrail
+chown -R contrail:contrail /var/lib/contrail/ /etc/contrail/ /etc/contrail/ssl/
+chown -R contrail:contrail /etc/contrail/ssl/certs/ /etc/contrail/ssl/private/
+chmod 0750 /etc/contrail/ /etc/contrail/ssl/ /etc/contrail/ssl/certs/
+chmod 0700 /etc/contrail/ssl/private/
+chmod 0750 /var/lib/contrail/dhcp/
+chmod 0750 /var/lib/contrail/backup/
+chmod +x /etc/init.d/contrail-vpp-agent
+chmod +x /etc/init.d/contrail-vrouter-nodemgr
 chmod +x /etc/init.d/supervisor-vrouter
 
 %package control
